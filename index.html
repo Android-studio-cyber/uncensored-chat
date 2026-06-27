@@ -2,27 +2,36 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1a1a2e">
     <title>Чат с HF</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            -webkit-text-size-adjust: 100%;
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #1a1a2e;
             color: #eee;
-            height: 100vh;
             display: flex;
-            overflow: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
         }
 
-        /* ===== SIDEBAR ===== */
         .sidebar {
             width: 280px;
             background: #0f1420;
@@ -30,6 +39,7 @@
             display: flex;
             flex-direction: column;
             transition: transform 0.3s ease;
+            flex-shrink: 0;
         }
 
         .sidebar-header {
@@ -54,7 +64,8 @@
             gap: 8px;
         }
 
-        .new-chat-btn:hover {
+        .new-chat-btn:hover,
+        .new-chat-btn:active {
             background: #c73652;
         }
 
@@ -62,10 +73,11 @@
             flex: 1;
             overflow-y: auto;
             padding: 10px;
+            -webkit-overflow-scrolling: touch;
         }
 
         .chat-item {
-            padding: 10px 12px;
+            padding: 12px;
             margin-bottom: 6px;
             border-radius: 8px;
             cursor: pointer;
@@ -77,7 +89,8 @@
             background: transparent;
         }
 
-        .chat-item:hover {
+        .chat-item:hover,
+        .chat-item:active {
             background: #16213e;
         }
 
@@ -95,12 +108,15 @@
         }
 
         .chat-item-actions {
-            display: none;
+            display: flex;
             gap: 4px;
+            opacity: 0;
+            transition: opacity 0.2s;
         }
 
-        .chat-item:hover .chat-item-actions {
-            display: flex;
+        .chat-item:hover .chat-item-actions,
+        .chat-item:focus-within .chat-item-actions {
+            opacity: 1;
         }
 
         .chat-item-btn {
@@ -108,13 +124,14 @@
             border: none;
             color: #888;
             cursor: pointer;
-            padding: 4px;
-            font-size: 0.85rem;
+            padding: 6px 8px;
+            font-size: 1rem;
             border-radius: 4px;
             transition: all 0.2s;
         }
 
-        .chat-item-btn:hover {
+        .chat-item-btn:hover,
+        .chat-item-btn:active {
             color: #e94560;
             background: rgba(233, 69, 96, 0.1);
         }
@@ -127,7 +144,6 @@
             font-style: italic;
         }
 
-        /* ===== MAIN AREA ===== */
         .main {
             flex: 1;
             display: flex;
@@ -142,6 +158,7 @@
             align-items: center;
             gap: 12px;
             border-bottom: 1px solid #0f3460;
+            flex-shrink: 0;
         }
 
         .menu-toggle {
@@ -149,9 +166,15 @@
             background: transparent;
             border: none;
             color: #eee;
-            font-size: 1.3rem;
+            font-size: 1.5rem;
             cursor: pointer;
-            padding: 4px 8px;
+            padding: 6px 10px;
+            border-radius: 6px;
+            line-height: 1;
+        }
+
+        .menu-toggle:active {
+            background: #1a1a2e;
         }
 
         .header h1 {
@@ -170,6 +193,7 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
+            -webkit-overflow-scrolling: touch;
         }
 
         .message {
@@ -204,9 +228,11 @@
         .input-area {
             background: #16213e;
             padding: 15px 20px;
+            padding-bottom: calc(15px + env(safe-area-inset-bottom));
             display: flex;
             gap: 10px;
             border-top: 1px solid #0f3460;
+            flex-shrink: 0;
         }
 
         #userInput {
@@ -216,9 +242,11 @@
             border-radius: 24px;
             background: #1a1a2e;
             color: #eee;
-            font-size: 1rem;
+            font-size: 16px;
             outline: none;
             transition: border-color 0.3s;
+            -webkit-appearance: none;
+            appearance: none;
         }
 
         #userInput:focus {
@@ -235,9 +263,11 @@
             font-size: 1rem;
             font-weight: 600;
             transition: background 0.3s;
+            white-space: nowrap;
         }
 
-        #sendBtn:hover {
+        #sendBtn:hover,
+        #sendBtn:active {
             background: #c73652;
         }
 
@@ -251,15 +281,11 @@
             font-style: italic;
         }
 
-        /* ===== OVERLAY для мобильных ===== */
         .overlay {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
             z-index: 99;
         }
 
@@ -267,15 +293,15 @@
             display: block;
         }
 
-        /* ===== АДАПТИВ ===== */
         @media (max-width: 768px) {
             .sidebar {
                 position: fixed;
                 top: 0;
                 left: 0;
-                height: 100vh;
+                height: 100%;
                 z-index: 100;
                 transform: translateX(-100%);
+                box-shadow: 2px 0 15px rgba(0, 0, 0, 0.5);
             }
 
             .sidebar.open {
@@ -285,13 +311,87 @@
             .menu-toggle {
                 display: block;
             }
+
+            .header {
+                padding: 12px 15px;
+            }
+
+            .header h1 {
+                font-size: 1rem;
+            }
+
+            .chat-container {
+                padding: 12px;
+                gap: 10px;
+            }
+
+            .message {
+                max-width: 88%;
+                padding: 10px 14px;
+                font-size: 0.95rem;
+            }
+
+            .input-area {
+                padding: 12px 15px;
+            }
+
+            #userInput {
+                padding: 10px 14px;
+            }
+
+            #sendBtn {
+                padding: 10px 18px;
+                font-size: 0.95rem;
+            }
+
+            .chat-item {
+                padding: 14px 12px;
+            }
+
+            .chat-item-actions {
+                opacity: 1;
+            }
+
+            .new-chat-btn {
+                padding: 14px;
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .message {
+                max-width: 92%;
+                font-size: 0.9rem;
+            }
+
+            .header h1 {
+                font-size: 0.95rem;
+            }
+
+            #sendBtn {
+                padding: 10px 14px;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-height: 500px) and (orientation: landscape) {
+            .header {
+                padding: 8px 12px;
+            }
+
+            .input-area {
+                padding: 8px 12px;
+            }
+
+            .chat-container {
+                padding: 10px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="overlay" id="overlay"></div>
 
-    <!-- Боковая панель -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <button class="new-chat-btn" id="newChatBtn">
@@ -301,10 +401,9 @@
         <div class="chat-list" id="chatList"></div>
     </aside>
 
-    <!-- Основная область -->
     <div class="main">
         <div class="header">
-            <button class="menu-toggle" id="menuToggle">☰</button>
+            <button class="menu-toggle" id="menuToggle" aria-label="Меню">☰</button>
             <h1 id="chatTitle">💬 Новый чат</h1>
         </div>
 
@@ -334,10 +433,9 @@
         const sidebar = document.getElementById("sidebar");
         const overlay = document.getElementById("overlay");
 
-        let chats = [];          // массив всех чатов
-        let activeChatId = null; // id активного чата
+        let chats = [];
+        let activeChatId = null;
 
-        // ===== Работа с хранилищем =====
         function saveChats() {
             localStorage.setItem(STORAGE_KEY, JSON.stringify({
                 chats: chats,
@@ -357,16 +455,9 @@
             }
         }
 
-        // ===== Управление чатами =====
         function createChat() {
             const id = "chat_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7);
-            const chat = {
-                id: id,
-                title: "Новый чат",
-                messages: [],
-                createdAt: Date.now()
-            };
-            chats.unshift(chat);
+            chats.unshift({ id: id, title: "Новый чат", messages: [], createdAt: Date.now() });
             activeChatId = id;
             saveChats();
             renderChatList();
@@ -414,7 +505,6 @@
             return chats.find(c => c.id === activeChatId);
         }
 
-        // ===== Рендер списка чатов =====
         function renderChatList() {
             chatList.innerHTML = "";
             if (chats.length === 0) {
@@ -447,7 +537,6 @@
             });
         }
 
-        // ===== Рендер активного чата =====
         function renderChat() {
             chatContainer.innerHTML = "";
             const chat = getActiveChat();
@@ -487,7 +576,6 @@
             return div.innerHTML;
         }
 
-        // ===== Очистка ответа от размышлений =====
         function cleanResponse(text) {
             const thinkEndIndex = text.indexOf('</think>');
             if (thinkEndIndex !== -1) {
@@ -498,7 +586,6 @@
             return text.trim();
         }
 
-        // ===== Отправка сообщения =====
         async function sendMessage() {
             const text = userInput.value.trim();
             if (!text) return;
@@ -512,7 +599,6 @@
             userInput.value = "";
             sendBtn.disabled = true;
 
-            // Если это первое сообщение — называем чат по нему
             if (chat.messages.length === 0) {
                 chat.title = text.slice(0, 40) + (text.length > 40 ? "..." : "");
                 renderChatList();
@@ -525,7 +611,6 @@
             const loadingMsg = addMessageToDOM("loading", "Думаю...");
 
             try {
-                // Формируем сообщения для API
                 const apiMessages = [
                     {
                         role: "system",
@@ -572,7 +657,6 @@
             }
         }
 
-        // ===== Мобильное меню =====
         function closeSidebarMobile() {
             sidebar.classList.remove("open");
             overlay.classList.remove("show");
@@ -585,14 +669,12 @@
 
         overlay.addEventListener("click", closeSidebarMobile);
 
-        // ===== События =====
         newChatBtn.addEventListener("click", createChat);
         sendBtn.addEventListener("click", sendMessage);
         userInput.addEventListener("keydown", (e) => {
             if (e.key === "Enter" && !sendBtn.disabled) sendMessage();
         });
 
-        // ===== Инициализация =====
         loadChats();
         if (chats.length === 0) {
             createChat();
