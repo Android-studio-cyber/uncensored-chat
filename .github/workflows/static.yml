@@ -23,7 +23,7 @@ jobs:
 
       - name: Replace token placeholder
         env:
-          HF_TOKEN: ${{ secrets.HUGING }}
+          HF_TOKEN: ${{ secrets.OPENROUTER }}
         run: |
           python3 -c "
           import os
